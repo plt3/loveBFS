@@ -1,58 +1,50 @@
+local utils = require("utils")
+
 function love.load()
 	love.window.setMode(1000, 1000, { resizable = true })
-	cellSize = 50 -- TODO: have this set automatically based on size of grid and window?
-	lineWidth = 4
-	grid = {
-		{ 0, 1, 0, 0, 1 },
-		{ 1, 1, 2, 0, 1 },
-		{ 0, 1, 2, 2, 0 },
-		{ 0, 1, 2, 0, 0 },
-		{ 2, 1, 2, 2, 0 },
-		{ 0, 1, 1, 2, 0 },
-		{ 0, 1, 2, 2, 0 },
-		{ 1, 1, 2, 2, 0 },
-		{ 0, 1, 2, 2, 0 },
-	}
+	-- TODO: make these all constants in conf.lua
+	CellSize = 50 -- TODO: have this set automatically based on size of grid and window?
+	LineWidth = 4
+	GridLeft = 100
+	GridTop = 100
+	GridSize = 15
+
+	SourceSet = false
+	DestSet = false
+	Grid = utils.makeGrid(GridSize)
+end
+
+function love.mousepressed(x, y, button, istouch, presses)
+	-- shift + click should be used to set source and destination, but regular click can
+	-- be used to make a wall
+	if utils.mouseInGrid(x, y, GridLeft, GridTop, GridSize, CellSize) then
+		local row = math.floor((y - GridTop) / CellSize) + 1
+		local column = math.floor((x - GridLeft) / CellSize) + 1
+		if love.keyboard.isDown("rshift", "lshift") then
+			if not SourceSet then
+				Grid[row][column] = 2
+				SourceSet = true
+			else
+				Grid[row][column] = 3
+				DestSet = true
+			end
+		else
+			Grid[row][column] = 1
+		end
+	end
+end
+
+function love.mousemoved(x, y, dx, dy, istouch)
+	-- dragging mouse creates walls
+	if utils.mouseInGrid(x, y, GridLeft, GridTop, GridSize, CellSize) then
+		if love.mouse.isDown(1) then
+			local row = math.floor((y - GridTop) / CellSize) + 1
+			local column = math.floor((x - GridLeft) / CellSize) + 1
+			Grid[row][column] = 1
+		end
+	end
 end
 
 function love.draw()
-	drawGrid(grid, cellSize, lineWidth, 100, 100)
-end
-
-function drawGrid(curGrid, curCellSize, lineWidth, x, y)
-	local height = #curGrid
-	local width = #curGrid[1]
-	local numColors = {
-		[0] = { 1, 1, 1 },
-		[1] = { 76 / 255, 78 / 255, 82 / 255 },
-		[2] = { 0, 0, 1 },
-	}
-
-	love.graphics.setLineWidth(lineWidth)
-	love.graphics.setColor(0, 0, 0)
-
-	-- draw vertical lines
-	for i = 0, width do
-		local line = { x + i * curCellSize, y, x + i * curCellSize, y + height * curCellSize }
-		love.graphics.line(line)
-	end
-
-	-- draw horizontal lines
-	for i = 0, height do
-		local line = { x, y + i * curCellSize, x + width * curCellSize, y + i * curCellSize }
-		love.graphics.line(line)
-	end
-
-	for i = 0, height - 1 do
-		for j = 0, width - 1 do
-			love.graphics.setColor(numColors[grid[i + 1][j + 1]])
-			love.graphics.rectangle(
-				"fill",
-				x + lineWidth / 2 + j * curCellSize,
-				y + lineWidth / 2 + i * curCellSize,
-				curCellSize - lineWidth,
-				curCellSize - lineWidth
-			)
-		end
-	end
+	utils.drawGrid(Grid, CellSize, LineWidth, GridLeft, GridTop)
 end

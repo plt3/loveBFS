@@ -3,17 +3,17 @@ local utils = require("utils")
 function love.load()
 	love.window.setMode(1000, 1000, { resizable = true })
 	-- TODO: make these all constants in conf.lua
-	CellSize = 50 -- TODO: have this set automatically based on size of grid and window?
+	CellSize = 40 -- TODO: have this set automatically based on size of grid and window?
 	LineWidth = 4
 	GridLeft = 100
 	GridTop = 100
-	GridSize = 15
-	FramesPerSec = 5
+	GridSize = 20
+	FramesPerSec = 10
 
 	ElapsedTime = 0
 	PrevFrameInt = 0
 	BFSQueue = {}
-	CurBFSCell = {}
+	CurBFSCoords = {}
 	Destination = nil
 	AlgoResult = nil
 	Grid = utils.makeGrid(GridSize)
@@ -27,14 +27,14 @@ function love.mousepressed(x, y, button, istouch, presses)
 		local column = math.ceil((x - GridLeft) / CellSize)
 		if love.keyboard.isDown("rshift", "lshift") then
 			if #BFSQueue == 0 then
-				Grid[row][column] = 2
+				Grid[row][column].number = 3
 				table.insert(BFSQueue, { row, column }) -- insert source into BFS queue
 			else
-				Grid[row][column] = 3
+				Grid[row][column].number = 4
 				Destination = { row, column }
 			end
 		else
-			Grid[row][column] = 1
+			Grid[row][column].number = 1
 		end
 	end
 end
@@ -45,7 +45,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 		if love.mouse.isDown(1) then
 			local row = math.floor((y - GridTop) / CellSize) + 1
 			local column = math.floor((x - GridLeft) / CellSize) + 1
-			Grid[row][column] = 1
+			Grid[row][column].number = 1
 		end
 	end
 end
@@ -56,7 +56,7 @@ function love.update(dt)
 		PrevFrameInt = math.floor(FramesPerSec * ElapsedTime)
 		if Destination ~= nil and AlgoResult == nil then
 			-- only get next frame if destination has been set and algorithm is not done
-			AlgoResult = utils.advanceBFS(Grid, BFSQueue, CurBFSCell)
+			AlgoResult = utils.advanceBFS(Grid, BFSQueue, CurBFSCoords)
 		end
 	end
 end

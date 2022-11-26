@@ -1,3 +1,5 @@
+local Cell = require("Cell")
+
 local M = {}
 
 function M.makeGrid(n)
@@ -6,7 +8,7 @@ function M.makeGrid(n)
 	for _ = 1, n do
 		local innerTable = {}
 		for _ = 1, n do
-			table.insert(innerTable, 0)
+			table.insert(innerTable, Cell:new(0, nil))
 		end
 		table.insert(outerTable, innerTable)
 	end
@@ -20,67 +22,84 @@ function M.mouseInGrid(x, y, gLeft, gTop, gSize, cSize)
 	return (x > gLeft and x < gRight) and (y > gTop and y < gBot)
 end
 
-function M.advanceBFS(grid, queue, curCell)
+function M.colorPath(startCell)
+	while startCell.parent ~= nil do
+		startCell.number = 5
+		startCell = startCell.parent
+	end
+end
+
+function M.advanceBFS(grid, queue, curCoords)
 	if #queue == 0 then
-		-- algorithm is done, probably means that it didn't find destination?
+		-- algorithm is done, means it didn't find destination
 		return "failure"
 	end
-	if #curCell == 0 then
-		-- dequeue and assign result to curCell
+	if #curCoords == 0 then
+		-- dequeue and assign result to curCoords
 		local temp = table.remove(queue, 1)
-		table.insert(curCell, temp[1])
-		table.insert(curCell, temp[2])
+		table.insert(curCoords, temp[1])
+		table.insert(curCoords, temp[2])
 	end
+
+	local curCell = grid[curCoords[1]][curCoords[2]]
 
 	local madeChange = false
 	local remainingAdj = false
-	local upOne = math.max(1, curCell[1] - 1)
-	local rightOne = math.min(#grid[1], curCell[2] + 1)
-	local downOne = math.min(#grid, curCell[1] + 1)
-	local leftOne = math.max(1, curCell[2] - 1)
+	local upOne = math.max(1, curCoords[1] - 1)
+	local rightOne = math.min(#grid[1], curCoords[2] + 1)
+	local downOne = math.min(#grid, curCoords[1] + 1)
+	local leftOne = math.max(1, curCoords[2] - 1)
 
-	if grid[upOne][curCell[2]] == 3 then
+	if grid[upOne][curCoords[2]].number == 4 then
+		M.colorPath(curCell)
 		return "done"
 	end
-	if grid[upOne][curCell[2]] == 0 then -- check above
-		grid[upOne][curCell[2]] = 2
-		table.insert(queue, { upOne, curCell[2] })
+	if grid[upOne][curCoords[2]].number == 0 then -- check above
+		grid[upOne][curCoords[2]].number = 2
+		grid[upOne][curCoords[2]].parent = curCell
+		table.insert(queue, { upOne, curCoords[2] })
 		madeChange = true
 	end
 
-	if grid[curCell[1]][rightOne] == 3 then
+	if grid[curCoords[1]][rightOne].number == 4 then
+		M.colorPath(curCell)
 		return "done"
 	end
-	if grid[curCell[1]][rightOne] == 0 then -- check right
+	if grid[curCoords[1]][rightOne].number == 0 then -- check right
 		if not madeChange then
-			grid[curCell[1]][rightOne] = 2
-			table.insert(queue, { curCell[1], rightOne })
+			grid[curCoords[1]][rightOne].number = 2
+			grid[curCoords[1]][rightOne].parent = curCell
+			table.insert(queue, { curCoords[1], rightOne })
 			madeChange = true
 		else
 			remainingAdj = true
 		end
 	end
 
-	if grid[downOne][curCell[2]] == 3 then
+	if grid[downOne][curCoords[2]].number == 4 then
+		M.colorPath(curCell)
 		return "done"
 	end
-	if grid[downOne][curCell[2]] == 0 then -- check down
+	if grid[downOne][curCoords[2]].number == 0 then -- check down
 		if not madeChange then
-			grid[downOne][curCell[2]] = 2
-			table.insert(queue, { downOne, curCell[2] })
+			grid[downOne][curCoords[2]].number = 2
+			grid[downOne][curCoords[2]].parent = curCell
+			table.insert(queue, { downOne, curCoords[2] })
 			madeChange = true
 		else
 			remainingAdj = true
 		end
 	end
 
-	if grid[curCell[1]][leftOne] == 3 then
+	if grid[curCoords[1]][leftOne].number == 4 then
+		M.colorPath(curCell)
 		return "done"
 	end
-	if grid[curCell[1]][leftOne] == 0 then -- check left
+	if grid[curCoords[1]][leftOne].number == 0 then -- check left
 		if not madeChange then
-			grid[curCell[1]][leftOne] = 2
-			table.insert(queue, { curCell[1], leftOne })
+			grid[curCoords[1]][leftOne].number = 2
+			grid[curCoords[1]][leftOne].parent = curCell
+			table.insert(queue, { curCoords[1], leftOne })
 			madeChange = true
 		else
 			remainingAdj = true
@@ -88,22 +107,16 @@ function M.advanceBFS(grid, queue, curCell)
 	end
 
 	if not remainingAdj then
-		-- if we've gone through all adjacent cells, then clear curCell (so the next
+		-- if we've gone through all adjacent cells, then clear curCoords (so the next
 		-- one can be dequeued)
-		table.remove(curCell)
-		table.remove(curCell)
+		table.remove(curCoords)
+		table.remove(curCoords)
 	end
 end
 
 function M.drawGrid(curGrid, curCellSize, lineWidth, x, y)
 	local height = #curGrid
 	local width = #curGrid[1]
-	local numColors = {
-		[0] = { 1, 1, 1 }, -- empty
-		[1] = { 76 / 255, 78 / 255, 82 / 255 }, -- wall
-		[2] = { 0, 0, 1 }, -- has been checked by algorithm
-		[3] = { 1, 0, 0 }, -- destination
-	}
 
 	love.graphics.setLineWidth(lineWidth)
 	love.graphics.setColor(0, 0, 0)
@@ -122,7 +135,7 @@ function M.drawGrid(curGrid, curCellSize, lineWidth, x, y)
 
 	for i = 0, height - 1 do
 		for j = 0, width - 1 do
-			love.graphics.setColor(numColors[Grid[i + 1][j + 1]])
+			love.graphics.setColor(Grid[i + 1][j + 1]:getColorTable())
 			love.graphics.rectangle(
 				"fill",
 				x + lineWidth / 2 + j * curCellSize,

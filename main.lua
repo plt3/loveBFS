@@ -12,8 +12,10 @@ function love.load()
 
 	ElapsedTime = 0
 	PrevFrameInt = 0
-	Source = nil
+	BFSQueue = {}
+	CurBFSCell = {}
 	Destination = nil
+	AlgoResult = nil
 	Grid = utils.makeGrid(GridSize)
 end
 
@@ -24,9 +26,9 @@ function love.mousepressed(x, y, button, istouch, presses)
 		local row = math.ceil((y - GridTop) / CellSize)
 		local column = math.ceil((x - GridLeft) / CellSize)
 		if love.keyboard.isDown("rshift", "lshift") then
-			if Source == nil then
+			if #BFSQueue == 0 then
 				Grid[row][column] = 2
-				Source = { row, column }
+				table.insert(BFSQueue, { row, column }) -- insert source into BFS queue
 			else
 				Grid[row][column] = 3
 				Destination = { row, column }
@@ -52,12 +54,16 @@ function love.update(dt)
 	ElapsedTime = ElapsedTime + dt
 	if math.floor(FramesPerSec * ElapsedTime) ~= PrevFrameInt then
 		PrevFrameInt = math.floor(FramesPerSec * ElapsedTime)
-		-- advance frame of algorithm here
-		-- should record current cell and have some function that can advance algorithm
-		-- one frame based on that cell, etc.
+		if Destination ~= nil and AlgoResult == nil then
+			-- only get next frame if destination has been set and algorithm is not done
+			AlgoResult = utils.advanceBFS(Grid, BFSQueue, CurBFSCell)
+		end
 	end
 end
 
 function love.draw()
 	utils.drawGrid(Grid, CellSize, LineWidth, GridLeft, GridTop)
+	if AlgoResult ~= nil then
+		love.graphics.print(AlgoResult)
+	end
 end

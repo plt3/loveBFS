@@ -17,8 +17,82 @@ function M.mouseInGrid(x, y, gLeft, gTop, gSize, cSize)
 	-- return if mouse (with coords (x,y)) is within grid
 	local gRight = gLeft + gSize * cSize
 	local gBot = gTop + gSize * cSize
-	-- check that mouse is within grid
 	return (x > gLeft and x < gRight) and (y > gTop and y < gBot)
+end
+
+function M.advanceBFS(grid, queue, curCell)
+	if #queue == 0 then
+		-- algorithm is done, probably means that it didn't find destination?
+		return "failure"
+	end
+	if #curCell == 0 then
+		-- dequeue and assign result to curCell
+		local temp = table.remove(queue, 1)
+		table.insert(curCell, temp[1])
+		table.insert(curCell, temp[2])
+	end
+
+	local madeChange = false
+	local remainingAdj = false
+	local upOne = math.max(1, curCell[1] - 1)
+	local rightOne = math.min(#grid[1], curCell[2] + 1)
+	local downOne = math.min(#grid, curCell[1] + 1)
+	local leftOne = math.max(1, curCell[2] - 1)
+
+	if grid[upOne][curCell[2]] == 3 then
+		return "done"
+	end
+	if grid[upOne][curCell[2]] == 0 then -- check above
+		grid[upOne][curCell[2]] = 2
+		table.insert(queue, { upOne, curCell[2] })
+		madeChange = true
+	end
+
+	if grid[curCell[1]][rightOne] == 3 then
+		return "done"
+	end
+	if grid[curCell[1]][rightOne] == 0 then -- check right
+		if not madeChange then
+			grid[curCell[1]][rightOne] = 2
+			table.insert(queue, { curCell[1], rightOne })
+			madeChange = true
+		else
+			remainingAdj = true
+		end
+	end
+
+	if grid[downOne][curCell[2]] == 3 then
+		return "done"
+	end
+	if grid[downOne][curCell[2]] == 0 then -- check down
+		if not madeChange then
+			grid[downOne][curCell[2]] = 2
+			table.insert(queue, { downOne, curCell[2] })
+			madeChange = true
+		else
+			remainingAdj = true
+		end
+	end
+
+	if grid[curCell[1]][leftOne] == 3 then
+		return "done"
+	end
+	if grid[curCell[1]][leftOne] == 0 then -- check left
+		if not madeChange then
+			grid[curCell[1]][leftOne] = 2
+			table.insert(queue, { curCell[1], leftOne })
+			madeChange = true
+		else
+			remainingAdj = true
+		end
+	end
+
+	if not remainingAdj then
+		-- if we've gone through all adjacent cells, then clear curCell (so the next
+		-- one can be dequeued)
+		table.remove(curCell)
+		table.remove(curCell)
+	end
 end
 
 function M.drawGrid(curGrid, curCellSize, lineWidth, x, y)
@@ -27,7 +101,7 @@ function M.drawGrid(curGrid, curCellSize, lineWidth, x, y)
 	local numColors = {
 		[0] = { 1, 1, 1 }, -- empty
 		[1] = { 76 / 255, 78 / 255, 82 / 255 }, -- wall
-		[2] = { 0, 0, 1 }, -- has been check by algorithm
+		[2] = { 0, 0, 1 }, -- has been checked by algorithm
 		[3] = { 1, 0, 0 }, -- destination
 	}
 

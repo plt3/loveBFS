@@ -1,4 +1,5 @@
 local utils = require("utils")
+local algorithms = require("algorithms")
 
 function love.load()
 	love.window.setMode(1000, 1000, { resizable = true })
@@ -9,10 +10,11 @@ function love.load()
 	GridTop = 100
 	GridSize = 20
 	FramesPerSec = 10
+	RunBFS = true
 
 	ElapsedTime = 0
 	PrevFrameInt = 0
-	BFSQueue = {}
+	QueueStack = {}
 	CurBFSCoords = {}
 	Destination = nil
 	AlgoResult = nil
@@ -25,27 +27,35 @@ function love.mousepressed(x, y, button, istouch, presses)
 	if utils.mouseInGrid(x, y, GridLeft, GridTop, GridSize, CellSize) and Destination == nil then
 		local row = math.ceil((y - GridTop) / CellSize)
 		local column = math.ceil((x - GridLeft) / CellSize)
-		if love.keyboard.isDown("rshift", "lshift") then
-			if #BFSQueue == 0 then
+		if presses == 2 then -- double click to set source/destination
+			if #QueueStack == 0 then
 				Grid[row][column].number = 3
-				table.insert(BFSQueue, { row, column }) -- insert source into BFS queue
+				table.insert(QueueStack, { row, column }) -- insert source into BFS queue
 			else
 				Grid[row][column].number = 4
 				Destination = { row, column }
 			end
 		else
-			Grid[row][column].number = 1
+			if love.keyboard.isDown("rshift", "lshift") then -- shift + click to erase wall
+				Grid[row][column].number = 0
+			else
+				Grid[row][column].number = 1
+			end
 		end
 	end
 end
 
 function love.mousemoved(x, y, dx, dy, istouch)
-	-- dragging mouse creates walls
+	-- dragging mouse creates walls, holding shift erases them
 	if utils.mouseInGrid(x, y, GridLeft, GridTop, GridSize, CellSize) and Destination == nil then
 		if love.mouse.isDown(1) then
 			local row = math.floor((y - GridTop) / CellSize) + 1
 			local column = math.floor((x - GridLeft) / CellSize) + 1
-			Grid[row][column].number = 1
+			if love.keyboard.isDown("rshift", "lshift") then
+				Grid[row][column].number = 0
+			else
+				Grid[row][column].number = 1
+			end
 		end
 	end
 end
@@ -56,7 +66,14 @@ function love.update(dt)
 		PrevFrameInt = math.floor(FramesPerSec * ElapsedTime)
 		if Destination ~= nil and AlgoResult == nil then
 			-- only get next frame if destination has been set and algorithm is not done
-			AlgoResult = utils.advanceBFS(Grid, BFSQueue, CurBFSCoords)
+			if RunBFS then
+				AlgoResult = algorithms.advanceBFS(Grid, QueueStack, CurBFSCoords)
+			else
+				AlgoResult = algorithms.advanceDFS(Grid, QueueStack)
+			end
+		elseif AlgoResult ~= nil then
+			-- algorithm has terminated, so clear any variables used in it
+			QueueStack = {}
 		end
 	end
 end

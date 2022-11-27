@@ -15,6 +15,18 @@ function M.makeGrid(n)
 	return outerTable
 end
 
+function M.clearPath(grid, queueStack)
+	for i = 1, #grid do
+		for j = 1, #grid[i] do
+			if grid[i][j].number == 2 or grid[i][j].number == 5 then
+				grid[i][j].number = 0
+			elseif grid[i][j].number == 3 then
+				table.insert(queueStack, { i, j })
+			end
+		end
+	end
+end
+
 function M.mouseInGrid(x, y, gLeft, gTop, gSize, cSize)
 	-- return if mouse (with coords (x,y)) is within grid
 	local gRight = gLeft + gSize * cSize
@@ -23,10 +35,13 @@ function M.mouseInGrid(x, y, gLeft, gTop, gSize, cSize)
 end
 
 function M.colorPath(startCell)
+	local total = 1
 	while startCell.parent ~= nil do
 		startCell.number = 5
 		startCell = startCell.parent
+		total = total + 1
 	end
+	return total
 end
 
 function M.drawGrid(curGrid, curCellSize, lineWidth, x, y)

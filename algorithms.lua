@@ -5,7 +5,7 @@ local M = {}
 function M.advanceBFS(grid, queue, curCoords)
 	if #queue == 0 then
 		-- algorithm is done, means it didn't find destination
-		return "failure"
+		return -1
 	end
 	if #curCoords == 0 then
 		-- dequeue and assign result to curCoords
@@ -24,8 +24,7 @@ function M.advanceBFS(grid, queue, curCoords)
 	local leftOne = math.max(1, curCoords[2] - 1)
 
 	if grid[upOne][curCoords[2]].number == 4 then
-		utils.colorPath(curCell)
-		return "done"
+		return utils.colorPath(curCell)
 	end
 	if grid[upOne][curCoords[2]].number == 0 then -- check above
 		grid[upOne][curCoords[2]].number = 2
@@ -35,8 +34,7 @@ function M.advanceBFS(grid, queue, curCoords)
 	end
 
 	if grid[curCoords[1]][rightOne].number == 4 then
-		utils.colorPath(curCell)
-		return "done"
+		return utils.colorPath(curCell)
 	end
 	if grid[curCoords[1]][rightOne].number == 0 then -- check right
 		if not madeChange then
@@ -50,8 +48,7 @@ function M.advanceBFS(grid, queue, curCoords)
 	end
 
 	if grid[downOne][curCoords[2]].number == 4 then
-		utils.colorPath(curCell)
-		return "done"
+		return utils.colorPath(curCell)
 	end
 	if grid[downOne][curCoords[2]].number == 0 then -- check down
 		if not madeChange then
@@ -65,8 +62,7 @@ function M.advanceBFS(grid, queue, curCoords)
 	end
 
 	if grid[curCoords[1]][leftOne].number == 4 then
-		utils.colorPath(curCell)
-		return "done"
+		return utils.colorPath(curCell)
 	end
 	if grid[curCoords[1]][leftOne].number == 0 then -- check left
 		if not madeChange then
@@ -90,7 +86,7 @@ end
 function M.advanceDFS(grid, stack)
 	if #stack == 0 then
 		-- algorithm is done, means it didn't find destination
-		return "failure"
+		return -1
 	end
 
 	local curCoords = table.remove(stack)
@@ -105,8 +101,7 @@ function M.advanceDFS(grid, stack)
 	local leftOne = math.max(1, curCoords[2] - 1)
 
 	if grid[upOne][curCoords[2]].number == 4 then
-		utils.colorPath(curCell)
-		return "done"
+		return utils.colorPath(curCell)
 	end
 	if grid[upOne][curCoords[2]].number == 0 then -- check above
 		grid[upOne][curCoords[2]].parent = curCell
@@ -114,8 +109,7 @@ function M.advanceDFS(grid, stack)
 	end
 
 	if grid[curCoords[1]][rightOne].number == 4 then
-		utils.colorPath(curCell)
-		return "done"
+		return utils.colorPath(curCell)
 	end
 	if grid[curCoords[1]][rightOne].number == 0 then -- check right
 		grid[curCoords[1]][rightOne].parent = curCell
@@ -123,8 +117,7 @@ function M.advanceDFS(grid, stack)
 	end
 
 	if grid[downOne][curCoords[2]].number == 4 then
-		utils.colorPath(curCell)
-		return "done"
+		return utils.colorPath(curCell)
 	end
 	if grid[downOne][curCoords[2]].number == 0 then -- check down
 		grid[downOne][curCoords[2]].parent = curCell
@@ -132,8 +125,7 @@ function M.advanceDFS(grid, stack)
 	end
 
 	if grid[curCoords[1]][leftOne].number == 4 then
-		utils.colorPath(curCell)
-		return "done"
+		return utils.colorPath(curCell)
 	end
 	if grid[curCoords[1]][leftOne].number == 0 then -- check left
 		grid[curCoords[1]][leftOne].parent = curCell

@@ -2,6 +2,10 @@
 
 > BFS/DFS visualizations using Lua and LÖVE
 
+## Demo:
+
+https://user-images.githubusercontent.com/65266160/204181197-e3f4da5d-f571-4a93-a0a9-e6faf8671cc8.mov
+
 ## Installation and Running:
 
 - make sure to have [LÖVE](https://love2d.org/) installed
